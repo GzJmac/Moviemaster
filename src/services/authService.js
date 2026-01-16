@@ -11,14 +11,14 @@ import {
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // Firebase configuration
-// Note: In production, these should be in environment variables
+// Load from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDemoKey-Replace-With-Your-Key",
-  authDomain: "moviemaster-demo.firebaseapp.com",
-  projectId: "moviemaster-demo",
-  storageBucket: "moviemaster-demo.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123def456"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "moviemaster-demo.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "moviemaster-demo",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "moviemaster-demo.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abc123def456"
 };
 
 // Initialize Firebase
