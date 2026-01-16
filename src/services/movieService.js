@@ -435,6 +435,9 @@ export const findSimilarMovies = (movieId, limit = 5) => {
     .slice(0, limit);
 };
 
+// Sentiment analysis keywords
+const POSITIVE_SENTIMENT_KEYWORDS = ['love', 'funny', 'good', 'great', 'excellent'];
+
 // Generate AI explanation for recommendation
 export const generateAIExplanation = (movie, userLikes, userRatings, movieNotes = {}) => {
   const likedMovies = MOVIES_DB.filter(m => userLikes.includes(m.id));
@@ -456,14 +459,17 @@ export const generateAIExplanation = (movie, userLikes, userRatings, movieNotes 
   
   // Analyze user notes for preferences
   let noteInsights = '';
+  
+  // Create movie lookup map for better performance
+  const movieIdMap = new Map(MOVIES_DB.map(m => [m.id, m]));
+  
   const notesWithPositiveSentiment = Object.entries(movieNotes)
     .filter(([id, note]) => {
       const text = note.text.toLowerCase();
-      return text.includes('love') || text.includes('funny') || text.includes('good') || 
-             text.includes('great') || text.includes('excellent');
+      return POSITIVE_SENTIMENT_KEYWORDS.some(keyword => text.includes(keyword));
     })
     .map(([id, note]) => ({ 
-      movie: MOVIES_DB.find(m => m.id === parseInt(id)),
+      movie: movieIdMap.get(parseInt(id)),
       note: note.text
     }))
     .filter(item => item.movie);

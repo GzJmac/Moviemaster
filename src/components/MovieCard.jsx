@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const MovieCard = ({ 
   movie, 
@@ -20,6 +20,11 @@ const MovieCard = ({
   const [hoveredStar, setHoveredStar] = useState(0);
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState(userNote?.text || '');
+  
+  // Update noteText when userNote prop changes
+  useEffect(() => {
+    setNoteText(userNote?.text || '');
+  }, [userNote]);
   
   const handleStarClick = (rating) => {
     onRate(movie.id, rating);
