@@ -3,7 +3,8 @@ const STORAGE_KEYS = {
   LIKES: 'moviemaster_likes',
   RATINGS: 'moviemaster_ratings',
   WATCHLIST: 'moviemaster_watchlist',
-  WATCH_HISTORY: 'moviemaster_watch_history'
+  WATCH_HISTORY: 'moviemaster_watch_history',
+  WATCHED_MOVIES: 'moviemaster_watched_movies'
 };
 
 // Get data from localStorage
@@ -138,6 +139,34 @@ export const addToWatchHistory = (movieId) => {
 export const isInWatchHistory = (movieId) => {
   const history = getWatchHistory();
   return history.includes(movieId);
+};
+
+// Watched Movies (movies user has already seen)
+export const getWatchedMovies = () => {
+  return getFromStorage(STORAGE_KEYS.WATCHED_MOVIES, []);
+};
+
+export const saveWatchedMovies = (watched) => {
+  return saveToStorage(STORAGE_KEYS.WATCHED_MOVIES, watched);
+};
+
+export const toggleWatchedMovie = (movieId) => {
+  const watched = getWatchedMovies();
+  const index = watched.indexOf(movieId);
+  
+  if (index > -1) {
+    watched.splice(index, 1);
+  } else {
+    watched.push(movieId);
+  }
+  
+  saveWatchedMovies(watched);
+  return watched;
+};
+
+export const isWatched = (movieId) => {
+  const watched = getWatchedMovies();
+  return watched.includes(movieId);
 };
 
 // Clear all data

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MovieCard from './components/MovieCard';
+import LoginModal from './components/LoginModal';
 import { 
   MOVIES_DB, 
   VIBES, 
@@ -15,13 +16,29 @@ import {
   getLikes,
   getRatings,
   getWatchlist,
+  getWatchedMovies,
   toggleLike,
   toggleWatchlist,
+  toggleWatchedMovie,
   setRating,
   getRating,
   isLiked,
-  isInWatchlist
+  isInWatchlist,
+  isWatched,
+  saveLikes,
+  saveRatings,
+  saveWatchlist,
+  saveWatchedMovies
 } from './utils/storage';
+import {
+  signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
+  logout,
+  onAuthChange,
+  saveUserData,
+  getUserData
+} from './services/authService';
 
 function App() {
   const [activeTab, setActiveTab] = useState('discover');
@@ -31,13 +48,58 @@ function App() {
   const [userLikes, setUserLikes] = useState([]);
   const [userRatings, setUserRatings] = useState({});
   const [watchlist, setWatchlist] = useState([]);
+  const [watchedMovies, setWatchedMovies] = useState([]);
+  const [user, setUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isGuest, setIsGuest] = useState(true);
   
   // Load user data on mount
   useEffect(() => {
-    setUserLikes(getLikes());
-    setUserRatings(getRatings());
-    setWatchlist(getWatchlist());
+    // Check for authentication state
+    const unsubscribe = onAuthChange(async (authUser) => {
+      if (authUser) {
+        setUser(authUser);
+        setIsGuest(false);
+        // Load user data from cloud
+        const { data } = await getUserData(authUser.uid);
+        if (data) {
+          setUserLikes(data.likes || []);
+          setUserRatings(data.ratings || {});
+          setWatchlist(data.watchlist || []);
+          setWatchedMovies(data.watchedMovies || []);
+          
+          // Sync to local storage
+          saveLikes(data.likes || []);
+          saveRatings(data.ratings || {});
+          saveWatchlist(data.watchlist || []);
+          saveWatchedMovies(data.watchedMovies || []);
+        }
+      } else {
+        setUser(null);
+        setIsGuest(true);
+        // Load from local storage for guest users
+        setUserLikes(getLikes());
+        setUserRatings(getRatings());
+        setWatchlist(getWatchlist());
+        setWatchedMovies(getWatchedMovies());
+      }
+    });
+    
+    return () => unsubscribe();
   }, []);
+  
+  // Sync user data to cloud when it changes
+  useEffect(() => {
+    if (user && !isGuest) {
+      saveUserData(user.uid, {
+        likes: userLikes,
+        ratings: userRatings,
+        watchlist: watchlist,
+        watchedMovies: watchedMovies,
+        lastUpdated: new Date().toISOString()
+      });
+    }
+  }, [user, userLikes, userRatings, watchlist, watchedMovies, isGuest]);
   
   // Handle like toggle
   const handleLike = (movieId) => {
@@ -51,10 +113,37 @@ function App() {
     setWatchlist([...newWatchlist]);
   };
   
+  // Handle watched toggle
+  const handleWatched = (movieId) => {
+    const newWatched = toggleWatchedMovie(movieId);
+    setWatchedMovies([...newWatched]);
+  };
+  
   // Handle rating
   const handleRate = (movieId, rating) => {
     const newRatings = setRating(movieId, rating);
     setUserRatings({...newRatings});
+  };
+  
+  // Handle sign in
+  const handleSignIn = async (email, password, isSignUp, isGoogle = false) => {
+    if (isGoogle) {
+      const result = await signInWithGoogle();
+      return result;
+    } else if (isSignUp) {
+      const result = await signUpWithEmail(email, password);
+      return result;
+    } else {
+      const result = await signInWithEmail(email, password);
+      return result;
+    }
+  };
+  
+  // Handle sign out
+  const handleSignOut = async () => {
+    await logout();
+    setUser(null);
+    setIsGuest(true);
   };
   
   // Get filtered movies based on current view
@@ -80,9 +169,11 @@ function App() {
     if (activeTab === 'watchlist') {
       movies = movies.filter(m => watchlist.includes(m.id));
     } else if (activeTab === 'recommendations') {
-      movies = getRecommendations(userLikes, userRatings, watchlist);
+      movies = getRecommendations(userLikes, userRatings, watchlist, watchedMovies);
     } else if (activeTab === 'liked') {
       movies = movies.filter(m => userLikes.includes(m.id));
+    } else if (activeTab === 'watched') {
+      movies = movies.filter(m => watchedMovies.includes(m.id));
     }
     
     return movies;
@@ -127,7 +218,26 @@ function App() {
       <header className="header">
         <h1>🎬 Movie Master</h1>
         <p>AI-powered movie recommendations tailored to your taste</p>
+        <div className="auth-section">
+          {user && !isGuest ? (
+            <div className="user-info">
+              <span className="user-email">{user.email}</span>
+              <button onClick={handleSignOut} className="signout-btn">Sign Out</button>
+            </div>
+          ) : (
+            <button onClick={() => setShowLoginModal(true)} className="signin-btn">
+              Sign In
+            </button>
+          )}
+        </div>
       </header>
+      
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onSignIn={handleSignIn}
+        />
+      )}
       
       <div className="container">
         {/* Tab Navigation */}
@@ -142,7 +252,7 @@ function App() {
             className={`tab-button ${activeTab === 'recommendations' ? 'active' : ''}`}
             onClick={() => setActiveTab('recommendations')}
           >
-            ✨ For You
+            ✨ For You (Top 50)
           </button>
           <button
             className={`tab-button ${activeTab === 'watchlist' ? 'active' : ''}`}
@@ -155,6 +265,12 @@ function App() {
             onClick={() => setActiveTab('liked')}
           >
             ❤️ Liked ({userLikes.length})
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'watched' ? 'active' : ''}`}
+            onClick={() => setActiveTab('watched')}
+          >
+            ✓ Watched ({watchedMovies.length})
           </button>
         </div>
         
@@ -218,6 +334,7 @@ function App() {
             <p>
               {activeTab === 'watchlist' && 'Your watchlist is empty. Add some movies!'}
               {activeTab === 'liked' && 'You haven\'t liked any movies yet. Start exploring!'}
+              {activeTab === 'watched' && 'You haven\'t marked any movies as watched yet.'}
               {activeTab === 'recommendations' && 'Like or rate some movies to get personalized recommendations!'}
               {activeTab === 'discover' && 'Try adjusting your search or filters.'}
             </p>
@@ -230,9 +347,11 @@ function App() {
                 movie={movie}
                 isLiked={isLiked(movie.id)}
                 isInWatchlist={isInWatchlist(movie.id)}
+                isWatched={isWatched(movie.id)}
                 userRating={getRating(movie.id)}
                 onLike={handleLike}
                 onWatchlist={handleWatchlist}
+                onWatched={handleWatched}
                 onRate={handleRate}
                 showRecommendation={activeTab === 'recommendations' && (userLikes.length > 0 || Object.keys(userRatings).length > 0)}
                 recommendationReason={getRecommendationReason(movie)}

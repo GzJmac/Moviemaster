@@ -384,9 +384,11 @@ export const calculateRecommendationScore = (movie, userLikes, userRatings) => {
 };
 
 // Get recommended movies based on user preferences
-export const getRecommendations = (userLikes, userRatings, watchlist) => {
-  // Don't recommend movies already in watchlist
-  const availableMovies = MOVIES_DB.filter(m => !watchlist.includes(m.id));
+export const getRecommendations = (userLikes, userRatings, watchlist, watchedMovies = []) => {
+  // Don't recommend movies already in watchlist or watched
+  const availableMovies = MOVIES_DB.filter(m => 
+    !watchlist.includes(m.id) && !watchedMovies.includes(m.id)
+  );
   
   // Calculate scores for each movie
   const scoredMovies = availableMovies.map(movie => ({
@@ -394,8 +396,10 @@ export const getRecommendations = (userLikes, userRatings, watchlist) => {
     recommendationScore: calculateRecommendationScore(movie, userLikes, userRatings)
   }));
   
-  // Sort by recommendation score
-  return scoredMovies.sort((a, b) => b.recommendationScore - a.recommendationScore);
+  // Sort by recommendation score and return top 50
+  return scoredMovies
+    .sort((a, b) => b.recommendationScore - a.recommendationScore)
+    .slice(0, 50);
 };
 
 // Find similar movies based on genres and vibe

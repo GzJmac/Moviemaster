@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 const MovieCard = ({ 
   movie, 
   isLiked, 
-  isInWatchlist, 
+  isInWatchlist,
+  isWatched,
   userRating,
   onLike, 
-  onWatchlist, 
+  onWatchlist,
+  onWatched,
   onRate,
   showRecommendation,
   recommendationReason,
@@ -68,6 +70,15 @@ const MovieCard = ({
             onClick={() => onWatchlist(movie.id)}
           >
             {isInWatchlist ? '✓ In List' : '+ Watchlist'}
+          </button>
+        </div>
+        <div className="watched-section">
+          <button
+            className={`watched-btn ${isWatched ? 'watched' : ''}`}
+            onClick={() => onWatched(movie.id)}
+            title={isWatched ? 'Mark as unwatched' : 'Mark as watched'}
+          >
+            {isWatched ? '✓ Already Watched' : '👁️ Mark as Watched'}
           </button>
         </div>
         <div className="rating-section">
