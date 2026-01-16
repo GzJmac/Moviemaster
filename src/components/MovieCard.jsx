@@ -6,16 +6,20 @@ const MovieCard = ({
   isInWatchlist,
   isWatched,
   userRating,
+  userNote,
   onLike, 
   onWatchlist,
   onWatched,
   onRate,
+  onNoteChange,
   showRecommendation,
   recommendationReason,
   showAIExplanation,
   aiExplanation
 }) => {
   const [hoveredStar, setHoveredStar] = useState(0);
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [noteText, setNoteText] = useState(userNote?.text || '');
   
   const handleStarClick = (rating) => {
     onRate(movie.id, rating);
@@ -23,6 +27,16 @@ const MovieCard = ({
   
   const handleStarHover = (rating) => {
     setHoveredStar(rating);
+  };
+  
+  const handleNoteSave = () => {
+    onNoteChange(movie.id, noteText);
+    setShowNoteInput(false);
+  };
+  
+  const handleNoteCancel = () => {
+    setNoteText(userNote?.text || '');
+    setShowNoteInput(false);
   };
   
   const renderStars = () => {
@@ -87,6 +101,44 @@ const MovieCard = ({
             {renderStars()}
           </div>
         </div>
+        
+        <div className="notes-section">
+          {!showNoteInput ? (
+            <div className="notes-display">
+              <button 
+                className="add-note-btn"
+                onClick={() => setShowNoteInput(true)}
+              >
+                {userNote ? '📝 Edit Note' : '📝 Add Note'}
+              </button>
+              {userNote && (
+                <div className="note-content">
+                  <p>{userNote.text}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="notes-input">
+              <textarea
+                className="note-textarea"
+                placeholder="Add your notes... (e.g., 'seen many times, very funny' or 'stopped halfway through')"
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                rows={3}
+                maxLength={500}
+              />
+              <div className="note-actions">
+                <button className="note-save-btn" onClick={handleNoteSave}>
+                  Save
+                </button>
+                <button className="note-cancel-btn" onClick={handleNoteCancel}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
         {showRecommendation && recommendationReason && (
           <div className="recommendation-reason">
             <p><strong>💡 Because you liked:</strong> {recommendationReason}</p>

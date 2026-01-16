@@ -436,7 +436,7 @@ export const findSimilarMovies = (movieId, limit = 5) => {
 };
 
 // Generate AI explanation for recommendation
-export const generateAIExplanation = (movie, userLikes, userRatings) => {
+export const generateAIExplanation = (movie, userLikes, userRatings, movieNotes = {}) => {
   const likedMovies = MOVIES_DB.filter(m => userLikes.includes(m.id));
   const highlyRatedMovies = Object.entries(userRatings)
     .filter(([_, rating]) => rating >= 4)
@@ -454,6 +454,29 @@ export const generateAIExplanation = (movie, userLikes, userRatings) => {
   
   const similarVibeMovies = relatedMovies.filter(rm => rm.vibe === movie.vibe);
   
+  // Analyze user notes for preferences
+  let noteInsights = '';
+  const notesWithPositiveSentiment = Object.entries(movieNotes)
+    .filter(([id, note]) => {
+      const text = note.text.toLowerCase();
+      return text.includes('love') || text.includes('funny') || text.includes('good') || 
+             text.includes('great') || text.includes('excellent');
+    })
+    .map(([id, note]) => ({ 
+      movie: MOVIES_DB.find(m => m.id === parseInt(id)),
+      note: note.text
+    }))
+    .filter(item => item.movie);
+  
+  if (notesWithPositiveSentiment.length > 0) {
+    const positiveGenres = [...new Set(notesWithPositiveSentiment.flatMap(item => item.movie.genres))];
+    const matchingGenres = positiveGenres.filter(g => movie.genres.includes(g));
+    
+    if (matchingGenres.length > 0) {
+      noteInsights = ` Your notes show you appreciate ${matchingGenres.join('/')} movies.`;
+    }
+  }
+  
   let explanation = `Based on your preferences, ${movie.title} is recommended because `;
   
   if (commonGenres.length > 0 && similarVibeMovies.length > 0) {
@@ -465,6 +488,8 @@ export const generateAIExplanation = (movie, userLikes, userRatings) => {
   } else {
     explanation += `it's a critically acclaimed ${movie.genres.join('/')} film that aligns with your taste for quality cinema.`;
   }
+  
+  explanation += noteInsights;
   
   return explanation;
 };

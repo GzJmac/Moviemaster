@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   RATINGS: 'moviemaster_ratings',
   WATCHLIST: 'moviemaster_watchlist',
   WATCH_HISTORY: 'moviemaster_watch_history',
-  WATCHED_MOVIES: 'moviemaster_watched_movies'
+  WATCHED_MOVIES: 'moviemaster_watched_movies',
+  MOVIE_NOTES: 'moviemaster_movie_notes'
 };
 
 // Get data from localStorage
@@ -167,6 +168,34 @@ export const toggleWatchedMovie = (movieId) => {
 export const isWatched = (movieId) => {
   const watched = getWatchedMovies();
   return watched.includes(movieId);
+};
+
+// Movie Notes (user notes for each movie)
+export const getMovieNotes = () => {
+  return getFromStorage(STORAGE_KEYS.MOVIE_NOTES, {});
+};
+
+export const saveMovieNotes = (notes) => {
+  return saveToStorage(STORAGE_KEYS.MOVIE_NOTES, notes);
+};
+
+export const setMovieNote = (movieId, note) => {
+  const notes = getMovieNotes();
+  if (note && note.trim()) {
+    notes[movieId] = {
+      text: note.trim(),
+      updatedAt: new Date().toISOString()
+    };
+  } else {
+    delete notes[movieId];
+  }
+  saveMovieNotes(notes);
+  return notes;
+};
+
+export const getMovieNote = (movieId) => {
+  const notes = getMovieNotes();
+  return notes[movieId] || null;
 };
 
 // Clear all data

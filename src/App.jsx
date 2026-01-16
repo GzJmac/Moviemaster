@@ -17,18 +17,22 @@ import {
   getRatings,
   getWatchlist,
   getWatchedMovies,
+  getMovieNotes,
   toggleLike,
   toggleWatchlist,
   toggleWatchedMovie,
   setRating,
+  setMovieNote,
   getRating,
+  getMovieNote,
   isLiked,
   isInWatchlist,
   isWatched,
   saveLikes,
   saveRatings,
   saveWatchlist,
-  saveWatchedMovies
+  saveWatchedMovies,
+  saveMovieNotes
 } from './utils/storage';
 import {
   signInWithGoogle,
@@ -49,6 +53,7 @@ function App() {
   const [userRatings, setUserRatings] = useState({});
   const [watchlist, setWatchlist] = useState([]);
   const [watchedMovies, setWatchedMovies] = useState([]);
+  const [movieNotes, setMovieNotes] = useState({});
   const [user, setUser] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isGuest, setIsGuest] = useState(true);
@@ -67,12 +72,14 @@ function App() {
           setUserRatings(data.ratings || {});
           setWatchlist(data.watchlist || []);
           setWatchedMovies(data.watchedMovies || []);
+          setMovieNotes(data.movieNotes || {});
           
           // Sync to local storage
           saveLikes(data.likes || []);
           saveRatings(data.ratings || {});
           saveWatchlist(data.watchlist || []);
           saveWatchedMovies(data.watchedMovies || []);
+          saveMovieNotes(data.movieNotes || {});
         }
       } else {
         setUser(null);
@@ -82,6 +89,7 @@ function App() {
         setUserRatings(getRatings());
         setWatchlist(getWatchlist());
         setWatchedMovies(getWatchedMovies());
+        setMovieNotes(getMovieNotes());
       }
     });
     
@@ -96,10 +104,11 @@ function App() {
         ratings: userRatings,
         watchlist: watchlist,
         watchedMovies: watchedMovies,
+        movieNotes: movieNotes,
         lastUpdated: new Date().toISOString()
       });
     }
-  }, [user, userLikes, userRatings, watchlist, watchedMovies, isGuest]);
+  }, [user, userLikes, userRatings, watchlist, watchedMovies, movieNotes, isGuest]);
   
   // Handle like toggle
   const handleLike = (movieId) => {
@@ -123,6 +132,12 @@ function App() {
   const handleRate = (movieId, rating) => {
     const newRatings = setRating(movieId, rating);
     setUserRatings({...newRatings});
+  };
+  
+  // Handle note change
+  const handleNoteChange = (movieId, noteText) => {
+    const newNotes = setMovieNote(movieId, noteText);
+    setMovieNotes({...newNotes});
   };
   
   // Handle sign in
@@ -349,14 +364,16 @@ function App() {
                 isInWatchlist={isInWatchlist(movie.id)}
                 isWatched={isWatched(movie.id)}
                 userRating={getRating(movie.id)}
+                userNote={getMovieNote(movie.id)}
                 onLike={handleLike}
                 onWatchlist={handleWatchlist}
                 onWatched={handleWatched}
                 onRate={handleRate}
+                onNoteChange={handleNoteChange}
                 showRecommendation={activeTab === 'recommendations' && (userLikes.length > 0 || Object.keys(userRatings).length > 0)}
                 recommendationReason={getRecommendationReason(movie)}
                 showAIExplanation={activeTab === 'recommendations' && (userLikes.length > 0 || Object.keys(userRatings).length > 0)}
-                aiExplanation={generateAIExplanation(movie, userLikes, userRatings)}
+                aiExplanation={generateAIExplanation(movie, userLikes, userRatings, movieNotes)}
               />
             ))}
           </div>

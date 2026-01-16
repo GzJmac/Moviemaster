@@ -7,13 +7,15 @@ An AI-powered movie recommendation web app that learns your taste from likes, ra
 - **User Authentication**: Sign in with Google OAuth or email/password to sync preferences across devices
 - **Personalized Recommendations**: AI-powered top 50 suggestions based on your likes, ratings, and watch history
 - **Watched Movies Tracking**: Mark movies as watched to exclude them from recommendations
+- **Movie Notes**: Add personal notes to any movie (e.g., "seen 100x, good" or "stopped halfway through")
+- **AI Profile Building**: Enhanced recommendations based on your notes and viewing patterns
 - **Vibe Filtering**: Choose your mood - chill comedy (Sandler-ish), dark thriller, romantic, uplifting, and more
 - **Genre Filters**: Browse by specific genres (Action, Drama, Comedy, Sci-Fi, etc.)
 - **Smart Search**: Find movies by title, description, or genre
 - **Watchlist**: Save movies to watch later
 - **Rating System**: Rate movies 1-5 stars to improve recommendations
 - **"Because you liked..."**: See why each movie is recommended based on your taste
-- **AI Explanations**: Get detailed explanations for why movies match your preferences
+- **AI Explanations**: Get detailed explanations for why movies match your preferences (enhanced with notes analysis)
 - **Cloud Sync**: Signed-in users get their preferences synced via Firebase
 - **Guest Mode**: Use without signing in with local storage only
 
